@@ -3,6 +3,12 @@ import matplotlib as mpl
 import matplotlib.pyplot as plt
 import random 
 from sklearn.linear_model import SGDClassifier
+from sklearn.model_selection import cross_val_score
+from sklearn.base import BaseEstimator
+import numpy as np
+from sklearn.metrics import precision_score, recall_score
+from sklearn.metrics import f1_score
+from sklearn.model_selection import cross_val_predict
 
 # descargamos el dataset
 mnist = fetch_openml('mnist_784', version=1)
@@ -42,3 +48,61 @@ plt.axis("off")
 plt.title(y[ix])
 plt.show()
 print(sgd_clf.predict([some_digit]))
+
+
+# ---- Métricas de clasificación ----
+
+# entrenamos con validación cruzada 3 modelos distintos usando la métrica de accuracy
+scores = cross_val_score(sgd_clf, X_train, y_train_5, cv=3, scoring="accuracy")
+print("clasificador")
+print(scores)
+
+# creamos un clasificador personalizado 
+class Never5Classifier(BaseEstimator):
+    def fit(self, X, y=None):
+        pass
+    
+    def predict(self, X):
+        return np.zeros((len(X), 1), dtype=bool)
+
+# hacemos que el clasificador personalizado que siempre dice que la imagen no es un 5, pasándolo por el modelo anterior
+# resultado peor que con el clasificador anterior
+never_5_clf = Never5Classifier()
+scores = cross_val_score(never_5_clf, X_train, y_train_5, cv=3, scoring="accuracy")
+print("clasificador personalizado")
+print(scores)
+
+# matriz de confusión
+
+score = y_train_pred = cross_val_predict(sgd_clf, X_train, y_train_5, cv=3)
+
+# recision vs Recall
+
+score = precision_score(y_train_5, y_train_pred)
+print("Recision")
+print(score)
+
+score = recall_score(y_train_5, y_train_pred)
+print("Recall")
+print(score)
+
+# f1 score
+
+score = f1_score(y_train_5, y_train_pred)
+print("F1 score")
+print(score)
+
+# recision vs recall tradeoff
+
+# nos devuelve un número
+y_scores = sgd_clf.decision_function([some_digit])
+y_scores
+
+# al que podemos usar para determinar su etiqueta respecto al threshold
+threshold = 0
+y_some_digit_pred = (y_scores > threshold)
+print(y_some_digit_pred)
+
+threshold = 8000
+y_some_digit_pred = (y_scores > threshold)
+print(y_some_digit_pred)
