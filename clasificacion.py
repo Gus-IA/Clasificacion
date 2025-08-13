@@ -9,6 +9,7 @@ import numpy as np
 from sklearn.metrics import precision_score, recall_score
 from sklearn.metrics import f1_score
 from sklearn.model_selection import cross_val_predict
+from sklearn.metrics import roc_curve
 
 # descargamos el dataset
 mnist = fetch_openml('mnist_784', version=1)
@@ -106,3 +107,26 @@ print(y_some_digit_pred)
 threshold = 8000
 y_some_digit_pred = (y_scores > threshold)
 print(y_some_digit_pred)
+
+
+# la curva ROC
+
+# pasamos primero todo el conjunto de dataset de test
+y_scores = sgd_clf.decision_function(X_train)
+
+# instanciamos la curva roc con los datos de test y puntuación
+fpr, tpr, thresholds = roc_curve(y_train_5, y_scores)
+
+
+# pintamos el gráfico 
+def plot_roc_curve(fpr, tpr, label=None):
+    plt.plot(fpr, tpr, linewidth=2, label=label)
+    plt.plot([0, 1], [0, 1], 'k--') 
+    plt.axis([0, 1, 0, 1])                                    
+    plt.xlabel('False Positive Rate (Fall-Out)', fontsize=16) 
+    plt.ylabel('True Positive Rate (Recall)', fontsize=16)    
+    plt.grid(True)                                            
+
+plt.figure(figsize=(8, 6))                         
+plot_roc_curve(fpr, tpr)              
+plt.show()
