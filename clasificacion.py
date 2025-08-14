@@ -12,6 +12,11 @@ from sklearn.model_selection import cross_val_predict
 from sklearn.metrics import roc_curve
 from sklearn.svm import SVC
 from sklearn.multiclass import OneVsRestClassifier
+from sklearn.model_selection import cross_val_predict
+from sklearn.metrics import confusion_matrix
+import seaborn as sns
+import pandas as pd
+from sklearn.preprocessing import StandardScaler
 
 # descargamos el dataset
 mnist = fetch_openml('mnist_784', version=1)
@@ -111,6 +116,30 @@ y_some_digit_pred = (y_scores > threshold)
 print(y_some_digit_pred)
 
 
+# Matriz de confusión
+
+
+# creamos un modelo de validación cruzada con 3 particiones para predir si un número es 5
+y_train_pred = cross_val_predict(sgd_clf, X_train, y_train_5, cv=3)
+
+# calculamos la matriz de confusión comparando las etiquetas reales con las del modelo
+confusion_matrix(y_train_5, y_train_pred)
+
+# calcula la matriz de confusión
+conf_matrix = confusion_matrix(y_train_5, y_train_pred)
+# convertimos la matriz de confusión en un dataFrame para mejor visualización
+conf_df = pd.DataFrame(conf_matrix, index=['False', 'True'], columns=['Pred False', 'Pred True'])
+
+# dibujamos un mapa de calor
+sns.heatmap(conf_df, annot=True, fmt='d', cmap='Blues', cbar=False, square=True)
+
+plt.title("Matriz de Confusión")
+plt.xlabel("Predicción")
+plt.ylabel("Valor Real")
+plt.tight_layout()
+plt.show()
+
+
 # la curva ROC
 
 # pasamos primero todo el conjunto de dataset de test
@@ -161,3 +190,49 @@ print(ovr_clf.predict([some_digit]))
 # entrenamiento y predicción con sgdclassifier
 sgd_clf.fit(X_train, y_train)
 print(sgd_clf.predict([some_digit]))
+
+# creamos una instancia del estandarizador y convertimos los datos a float64
+scaler = StandardScaler()
+X_train_scaled = scaler.fit_transform(X_train.astype(np.float64))
+
+# hacemos una validación cruzada con los datos escalados y accuracy como métrica
+cross_val_score(sgd_clf, X_train_scaled, y_train, cv=3, scoring="accuracy")
+
+
+# ---- Análisis de errores ----
+
+# hacemos una validación cruzada y entrenamos el modelo con los 3000 primeros ejemplos
+# creamos la matriz de confusión comparando los datos predichos con los reales
+y_train_pred = cross_val_predict(sgd_clf, X_train_scaled[:3000], y_train[:3000], cv=3)
+conf_mx = confusion_matrix(y_train[:3000], y_train_pred[:3000])
+
+
+# creamos un dataFrame de la matriz de confusión
+conf_df = pd.DataFrame(conf_mx, 
+                       index=[str(i) for i in range(10)], 
+                       columns=[f'Pred {i}' for i in range(10)])
+
+# dibujamos el mapa de calor
+plt.figure(figsize=(10, 8))
+sns.heatmap(conf_df, annot=True, fmt='d', cmap='Blues', cbar=True, square=True)
+plt.title('Confusion Matrix for MNIST Classes')
+plt.xlabel('Predicted Label')
+plt.ylabel('True Label')
+plt.tight_layout()
+plt.show()
+
+
+# normalizamos la matriz de confusión por filas
+row_sums = conf_mx.sum(axis=1, keepdims=True)
+norm_conf_mx = conf_mx / row_sums
+
+# dibujamos el mapa de calor
+np.fill_diagonal(norm_conf_mx, 0)
+plt.figure(figsize=(10, 8))
+sns.heatmap(norm_conf_mx, cmap='gray_r', annot=True, fmt='.2f', cbar=True)
+plt.title('Normalized Confusion Matrix')
+plt.xlabel('Predicted Label')
+plt.ylabel('True Label')
+plt.tight_layout()
+plt.show()
+
