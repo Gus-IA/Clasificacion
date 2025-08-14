@@ -10,6 +10,8 @@ from sklearn.metrics import precision_score, recall_score
 from sklearn.metrics import f1_score
 from sklearn.model_selection import cross_val_predict
 from sklearn.metrics import roc_curve
+from sklearn.svm import SVC
+from sklearn.multiclass import OneVsRestClassifier
 
 # descargamos el dataset
 mnist = fetch_openml('mnist_784', version=1)
@@ -130,3 +132,32 @@ def plot_roc_curve(fpr, tpr, label=None):
 plt.figure(figsize=(8, 6))                         
 plot_roc_curve(fpr, tpr)              
 plt.show()
+
+
+# ---- Clasificación Multiclase ----
+
+# OvO (One versus One)
+# entrenamos un modelo con lo primeros 1000 datos y predice un dígito
+svm_clf = SVC(gamma="auto", random_state=42)
+svm_clf.fit(X_train[:1000], y_train[:1000])
+svm_clf.predict([some_digit])
+
+# extraemos los valores de la puntuación de predicción
+some_digit_scores = svm_clf.decision_function([some_digit])
+print(some_digit_scores)
+
+# obtenemos el valor más alto
+print(np.argmax(some_digit_scores))
+
+
+
+# OVR (One versus Rest)
+# entrenamos un modelo con los primeros 1000 datos y predice un dígito
+ovr_clf = OneVsRestClassifier(SVC(gamma="auto", random_state=42))
+ovr_clf.fit(X_train[:1000], y_train[:1000])
+print(ovr_clf.predict([some_digit]))
+
+
+# entrenamiento y predicción con sgdclassifier
+sgd_clf.fit(X_train, y_train)
+print(sgd_clf.predict([some_digit]))
