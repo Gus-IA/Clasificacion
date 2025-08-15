@@ -17,6 +17,7 @@ from sklearn.metrics import confusion_matrix
 import seaborn as sns
 import pandas as pd
 from sklearn.preprocessing import StandardScaler
+from sklearn.neighbors import KNeighborsClassifier
 
 # descargamos el dataset
 mnist = fetch_openml('mnist_784', version=1)
@@ -236,3 +237,17 @@ plt.ylabel('True Label')
 plt.tight_layout()
 plt.show()
 
+
+# ---- Clasificación Multietiqueta ----
+
+# comprueba si el número es mayor o igual a 7 y si es par 
+y_train_large = (y_train.astype(int) >= 7)
+y_train_odd = (y_train.astype(int) % 2 == 1)
+y_multilabel = np.c_[y_train_large, y_train_odd]
+
+# entrenamos el modelo
+knn_clf = KNeighborsClassifier()
+knn_clf.fit(X_train, y_multilabel)
+
+# hacemos la predicción
+print(knn_clf.predict([some_digit]))
